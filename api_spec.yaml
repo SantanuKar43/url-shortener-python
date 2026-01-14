@@ -1,59 +1,87 @@
 openapi: 3.0.3
 info:
   title: URL Shortener API
-  description: A simple API to create shortened URLs and expand them back to their original form.
-  version: 1.0.0
+  description: A URL shortener with redirection, preview, and deletion capabilities.
+  version: 1.1.0
 
 paths:
   /:
     post:
       summary: Create a shortened URL
-      description: Takes a long URL and returns a unique short identifier.
+      description: Send a plain text URL in the request body to generate a short ID.
       requestBody:
         required: true
         content:
-          application/x-www-form-urlencoded:
+          text/plain:
             schema:
-              type: object
-              properties:
-                url:
-                  type: string
-                  format: uri
-                  description: The original long URL to be shortened.
-              required:
-                - url
+              type: string
+              example: "https://www.example.com/very/long/path/to/something"
       responses:
         '200':
-          description: Successfully created shortened URL.
+          description: Successfully created. Returns the short ID.
           content:
             text/plain:
               schema:
                 type: string
                 example: "aB123"
         '400':
-          description: Bad Request (e.g., missing or invalid URL).
+          description: Bad Request (e.g., body is not a valid URL).
         '500':
-          description: Internal Server Error (failed to create the ID).
+          description: Internal Server Error.
 
   /{short_id}:
     get:
-      summary: Expand short URL
-      description: Redirects the user to the original long URL associated with the provided ID.
+      summary: Expand short URL (Redirect)
+      description: Redirects to the original long URL.
       parameters:
         - name: short_id
           in: path
           required: true
-          description: The unique identifier of the shortened URL.
           schema:
             type: string
       responses:
         '302':
-          description: Found - redirecting to the original URL.
+          description: Found - redirecting.
           headers:
             Location:
-              description: The original long URL destination.
+              description: The destination URL.
               schema:
                 type: string
-                format: uri
         '404':
-          description: Short URL not found.
+          description: Short ID not found.
+    
+    delete:
+      summary: Delete a shortened URL
+      description: Removes the mapping for the provided short ID.
+      parameters:
+        - name: short_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully deleted.
+        '404':
+          description: Short ID not found.
+
+  /preview/{short_id}:
+    get:
+      summary: Preview destination
+      description: Returns the original long URL as plain text without redirecting.
+      parameters:
+        - name: short_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success. Returns the long URL.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "https://www.example.com/very/long/path/to/something"
+        '404':
+          description: Short ID not found.
