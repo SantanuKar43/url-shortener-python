@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: URL Shortener API
+  description: A simple API to create shortened URLs and expand them back to their original form.
+  version: 1.0.0
+
+paths:
+  /:
+    post:
+      summary: Create a shortened URL
+      description: Takes a long URL and returns a unique short identifier.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: The original long URL to be shortened.
+              required:
+                - url
+      responses:
+        '200':
+          description: Successfully created shortened URL.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "aB123"
+        '400':
+          description: Bad Request (e.g., missing or invalid URL).
+        '500':
+          description: Internal Server Error (failed to create the ID).
+
+  /{short_id}:
+    get:
+      summary: Expand short URL
+      description: Redirects the user to the original long URL associated with the provided ID.
+      parameters:
+        - name: short_id
+          in: path
+          required: true
+          description: The unique identifier of the shortened URL.
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Found - redirecting to the original URL.
+          headers:
+            Location:
+              description: The original long URL destination.
+              schema:
+                type: string
+                format: uri
+        '404':
+          description: Short URL not found.
