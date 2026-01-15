@@ -1,5 +1,6 @@
 from typing import Annotated
 from fastapi import FastAPI, Form, status, HTTPException, Response
+from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
 import url_store
 
@@ -18,9 +19,7 @@ def create(url: Annotated[str, Form()]):
 def resolve(short_id: str, response: Response):
     url = url_store.resolve_url(short_id, app.state.redis)
     if url is not None:
-        response.headers["Location"] = url
-        response.status_code = status.HTTP_302_FOUND
-        return
+        return RedirectResponse(url = url, status_code = status.HTTP_302_FOUND)
     raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "url not found")
 
 @app.get("/preview/{short_id}", status_code = status.HTTP_200_OK)

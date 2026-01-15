@@ -1,5 +1,7 @@
 import redis
 import os
+import base58
+from urllib.parse import urlparse
 
 prefix = "uss-py:"
 ctr_key = "ctr"
@@ -22,9 +24,12 @@ def initialise_redis():
         print(f"An error occurred: {e}")
 
 def create(url: str, r) -> str:
+    parsed_url = urlparse(url)
+    if parsed_url.scheme == '':
+        parsed_url = parsed_url._replace(scheme="https")
     count = r.incr(prefix + ctr_key)
     short_id = create_short_id(count)
-    r.set(prefix + short_id, url)
+    r.set(prefix + short_id, parsed_url.geturl())
     return short_id
 
 def resolve_url(short_id: str, r) -> str:
@@ -34,4 +39,4 @@ def delete(short_id: str, r):
     r.delete(prefix + short_id)
 
 def create_short_id(n: int):
-    return format(n, 'x')
+    return base58.b58encode_int(n).decode("utf-8")
